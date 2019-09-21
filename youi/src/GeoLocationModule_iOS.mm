@@ -1,4 +1,4 @@
-#if defined(YI_IOS)
+#if defined(YI_IOS) || defined(YI_TVOS)
 #include "GeoLocationModule.h"
 
 #include <logging/YiLogger.h>
@@ -45,7 +45,7 @@ YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Cal
         [pLocationManager requestLocation];
 
         folly::dynamic locationInfo = folly::dynamic::object;
-        
+
         locationInfo["lat"] = ToDynamic(pLocationManager.location.coordinate.latitude);
         locationInfo["long"] = ToDynamic(pLocationManager.location.coordinate.longitude);
         locationInfo["alt"] = ToDynamic(pLocationManager.location.altitude);
@@ -54,7 +54,11 @@ YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Cal
     }
     else
     {
-        failedCallback({});
+        folly::dynamic errorInfo = folly::dynamic::object;
+
+        errorInfo["message"] = ToDynamic( "Location Services currently not enabled." );
+
+        failedCallback({ ToDynamic(errorInfo) });
     }
 }
 #endif

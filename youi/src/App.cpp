@@ -6,7 +6,7 @@
 #include "OrientationLockModule.h"
 
 #include <JSBundlingStrings.h>
-#include <automation/YiWebDriverLocator.h>
+#include <appium/YiWebDriverLocator.h>
 #include <cxxreact/JSBigString.h>
 #include <glog/logging.h>
 

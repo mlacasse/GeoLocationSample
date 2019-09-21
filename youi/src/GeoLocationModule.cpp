@@ -17,12 +17,10 @@ GeoLocationModule::GeoLocationModule()
 
 YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Callback failedCallback)
 {
-    folly::dynamic locationInfo = folly::dynamic::object;
-
-    locationInfo["lat"] = ToDynamic(0);
-    locationInfo["long"] = ToDynamic(0);
-    locationInfo["alt"] = ToDynamic(0);
-
-    successCallback({ ToDynamic(locationInfo) });
+    folly::dynamic errorInfo = folly::dynamic::object;
+    
+    errorInfo["message"] = ToDynamic( "Location Services currently not enabled." );
+    
+    failedCallback({ ToDynamic(errorInfo) });
 }
 #endif

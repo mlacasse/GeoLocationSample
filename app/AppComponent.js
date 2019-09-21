@@ -47,25 +47,27 @@ class AppComponent extends PureComponent {
 
     const style = {
       flex: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
       backgroundColor: location ? 'green' : 'red',
     };
 
     if (location) {
-      const { lat, long, alt } = location;
+      const { lat, long } = location;
 
       return (
         <View style={style}>
-          <Text style={{ fontSize: 28, color: 'white', }}>Location Services: {location ? 'ON' : 'OFF'}</Text>
+          <Text style={{ fontSize: 36, color: 'white', }}>Location Services: {location ? 'ON' : 'OFF'}</Text>
           <Text style={{ fontSize: 28, color: 'white', }}>Lat: {lat}</Text>
           <Text style={{ fontSize: 28, color: 'white', }}>Long: {long}</Text>
-          <Text style={{ fontSize: 28, color: 'white', }}>alt: {alt}</Text>
         </View>
       );
     }
 
     return (
       <View style={style}>
-        <Text style={{ fontSize: 28, color: 'white', }}>Nope.</Text>
+        <Text style={{ fontSize: 72, color: 'white', }}>Nope.</Text>
       </View>
     );
   }
