@@ -13,51 +13,65 @@ using namespace yi::react;
 extern JavaVM *cachedJVM;
 extern jobject cachedActivity;
 
-GeoLocationModule::GeoLocationModule() :
-  countryCode(""),
-  longitude(0),
-  latitude(0) {
-    // JNIEnv *pEnv = NULL;
+GeoLocationModule::GeoLocationModule() {
+}
 
-    // cachedJVM->GetEnv(reinterpret_cast<void **>(&pEnv), JNI_VERSION_1_6);
+YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Callback failedCallback)
+{
+     JNIEnv *pEnv = NULL;
 
-    // if (pEnv)
-    // {
-    //     jclass localDeviceClass = pEnv->FindClass("tv/youi/AccessibilityInfoModule");
-    //     jclass _class = (jclass)pEnv->NewGlobalRef(localDeviceClass);
+     cachedJVM->GetEnv(reinterpret_cast<void **>(&pEnv), JNI_VERSION_1_6);
 
-    //     if (_class)
-    //     {
-    //         jmethodID _enabled   = pEnv->GetStaticMethodID(_class, "_enabled", "(Landroid/content/Context;)Z");
-    //         jmethodID _audible   = pEnv->GetStaticMethodID(_class, "_audible", "(Landroid/content/Context;)Z");
-    //         jmethodID _generic   = pEnv->GetStaticMethodID(_class, "_generic", "(Landroid/content/Context;)Z");
-    //         jmethodID _haptic    = pEnv->GetStaticMethodID(_class, "_haptic", "(Landroid/content/Context;)Z");
-    //         jmethodID _spoken    = pEnv->GetStaticMethodID(_class, "_spoken", "(Landroid/content/Context;)Z");
-    //         jmethodID _visual    = pEnv->GetStaticMethodID(_class, "_visual", "(Landroid/content/Context;)Z");
-    //         jmethodID _braille   = pEnv->GetStaticMethodID(_class, "_braille", "(Landroid/content/Context;)Z");
+     if (pEnv)
+     {
+         jclass localDeviceClass = pEnv->FindClass("tv/youi/app/AppActivity");
+         jclass _class = (jclass) pEnv->NewGlobalRef(localDeviceClass);
 
-    //         YI_LOGD(LOG_TAG, "Initialized JNI methods.");
+         if (_class)
+         {
+             jmethodID _get = pEnv->GetMethodID(_class, "_get", "()[D");
 
-    //         accessibilityEnabled = (jboolean)pEnv->CallStaticBooleanMethod(_class, _enabled, cachedActivity);
+             if (_get)
+             {
+                 auto location = (jdoubleArray) pEnv->CallObjectMethod(cachedActivity, _get);
 
-    //         YI_LOGD(LOG_TAG, "accessibility: %s", (accessibilityEnabled ? "on" : "off"));
+                 if (location)
+                 {
+                     jsize size = pEnv->GetArrayLength(location);
 
-    //         if (accessibilityEnabled) {
-    //           audibleFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _audible, cachedActivity);
-    //           genericFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _generic, cachedActivity);
-    //           hapticFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _haptic, cachedActivity);
-    //           spokenFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _spoken, cachedActivity);
-    //           visualFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _visual, cachedActivity);
-    //           brailleFeedbackEnabled = (jboolean) pEnv->CallStaticBooleanMethod(_class, _braille, cachedActivity);
-    //         }
+                     std::vector<double> input(size);
 
-    //         YI_LOGD(LOG_TAG, "audible: %s", (audibleFeedbackEnabled ? "on" : "off"));
-    //         YI_LOGD(LOG_TAG, "generic: %s", (genericFeedbackEnabled ? "on" : "off"));
-    //         YI_LOGD(LOG_TAG, "haptic: %s", (hapticFeedbackEnabled ? "on" : "off"));
-    //         YI_LOGD(LOG_TAG, "spoken: %s", (spokenFeedbackEnabled ? "on" : "off"));
-    //         YI_LOGD(LOG_TAG, "visual: %s", (visualFeedbackEnabled ? "on" : "off"));
-    //         YI_LOGD(LOG_TAG, "braille: %s", (brailleFeedbackEnabled ? "on" : "off"));
-    //     }
-    // }
+                     pEnv->GetDoubleArrayRegion(location, 0, size, &input[0]);
+
+                     folly::dynamic locationInfo = folly::dynamic::object;
+
+                     if (size == 3)  // Expect 3 items in this array; lat, long, and alt.
+                     {
+                         locationInfo["lat"] = ToDynamic(input[0]);
+                         locationInfo["long"] = ToDynamic(input[1]);
+                         locationInfo["alt"] = ToDynamic(input[2]);
+
+                         successCallback({ToDynamic(locationInfo)});
+                     }
+                     else
+                     {
+                         folly::dynamic errorInfo = folly::dynamic::object;
+
+                         errorInfo["message"] = ToDynamic("Location Services currently not available.");
+
+                         failedCallback({ToDynamic(errorInfo)});
+                     }
+                 }
+                 else
+                 {
+                     folly::dynamic errorInfo = folly::dynamic::object;
+
+                     errorInfo["message"] = ToDynamic("Location Services currently not available.");
+
+                     failedCallback({ToDynamic(errorInfo)});
+                 }
+             }
+         }
+     }
 }
 #endif

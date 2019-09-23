@@ -56,7 +56,7 @@ YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Cal
     {
         folly::dynamic errorInfo = folly::dynamic::object;
 
-        errorInfo["message"] = ToDynamic( "Location Services currently not enabled." );
+        errorInfo["message"] = ToDynamic( "Location Services currently not available." );
 
         failedCallback({ ToDynamic(errorInfo) });
     }

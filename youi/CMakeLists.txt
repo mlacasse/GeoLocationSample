@@ -2,8 +2,9 @@
 # © You i Labs Inc. 2000-2019. All rights reserved.
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-include(Project.cmake)
-
+set(YI_PROJECT_NAME "GeoLocationSample") # The name of the project. When building for Android, this is passed from Android Studio.
+set(YI_PACKAGE_NAME "tv.youi.geolocationsample") # The package name used for the project.")
+set(YI_DISPLAY_NAME "GeoLocationSample") # The name of the application displayed on the device.
 set(YI_EXCLUDED_ASSET_FILE_EXTENSIONS ".log,.aep" CACHE STRING "Comma-delimited list of file extensions whose files should be omitted during asset copying.")
 set(YI_YOUI_ENGINE_VERSION 4.999.0 CACHE STRING "Version required for the You.i Engine.")
 set(YI_VERSION_NUMBER 1.0.0.0 CACHE STRING "Build version of the application. This is the version that will be displayed to the end user in the store.")

@@ -14,7 +14,6 @@ public:
     YI_RN_EXPORT_NAME(GeoLocation);
     GeoLocationModule();
 
-    YI_RN_EXPORT_CONSTANT(enabled);
     YI_RN_EXPORT_METHOD(get)(Callback successCallback, Callback failedCallback);
 };
 
