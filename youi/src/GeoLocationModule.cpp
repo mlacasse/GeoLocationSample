@@ -9,7 +9,7 @@ using namespace yi::react;
 
 YI_RN_INSTANTIATE_MODULE(GeoLocationModule);
 
-#if !defined(YI_ANDROID) && !defined(YI_IOS) && !defined(YI_TVOS)
+#if !defined(YI_ANDROID) && !defined(YI_IOS)
 GeoLocationModule::GeoLocationModule()
 {
   YI_LOGE(LOG_TAG, "React Native GeoLocationModule is not supported on this platform.");

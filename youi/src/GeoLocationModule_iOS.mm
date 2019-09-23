@@ -1,4 +1,4 @@
-#if defined(YI_IOS) || defined(YI_TVOS)
+#if defined(YI_IOS)
 #include "GeoLocationModule.h"
 
 #include <logging/YiLogger.h>
