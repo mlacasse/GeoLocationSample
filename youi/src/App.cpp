@@ -50,6 +50,7 @@ enum
 
     // Error messages
     pPreferences->Set("TAG_CYIAssetDownloadHelper", "ERROR");
+    pPreferences->Set("TAG_CYIBackButtonHandler", "ERROR");
     pPreferences->Set("TAG_CYIExoPlayer", "ERROR");
     pPreferences->Set("TAG_CYIHTTPService", "ERROR");
     pPreferences->Set("TAG_CYIHTTPServiceStats", "ERROR");
@@ -57,13 +58,16 @@ enum
     pPreferences->Set("TAG_CYILRUCache", "ERROR");
     pPreferences->Set("TAG_CYIPersistentStorePriv_Default", "ERROR");
     pPreferences->Set("TAG_CYISceneManager", "ERROR");
+    pPreferences->Set("TAG_CYITextEngine", "ERROR");
     pPreferences->Set("TAG_CYITransferHandle", "ERROR");
     pPreferences->Set("TAG_CYIScreenTransitionManager", "ERROR");
     pPreferences->Set("TAG_CYISecureStorageBridgeDefault", "ERROR");
+    pPreferences->Set("TAG_CYISSLService", "ERROR");
     pPreferences->Set("TAG_CYITCPSocketPriv_Base", "ERROR");
     pPreferences->Set("TAG_AccessibilityInfoModule", "ERROR");
     pPreferences->Set("TAG_DecoratorMap", "ERROR");
     pPreferences->Set("TAG_EventDispatcherModule", "ERROR");
+    pPreferences->Set("TAG_ExceptionsManagerModule", "ERROR");
     pPreferences->Set("TAG_NativeAnimatedNodesManager", "ERROR");
     pPreferences->Set("TAG_ShadowTree", "ERROR");
     pPreferences->Set("TAG_Transfer", "ERROR");
@@ -79,14 +83,6 @@ enum
     pPreferences->Set("TAG_CYISceneNode", "NONE");
 
     CYILogger::SetPreferences(pPreferences);
-
-    CYINetworkConfiguration config;
-
-    config.SetResponseCacheSize(oneMegabyteInBytes * 12);
-    config.SetPersistentCacheSize(0);
-
-    CYIHTTPService::GetInstance()->Start(config);
-    CYIHTTPService::GetInstance()->ClearCache();
     
 #if !defined(YI_MINI_GLOG)
     // miniglog defines this using a non-const char * causing a compile error and it has no implementation anyway.

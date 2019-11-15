@@ -1,4 +1,4 @@
-#if defined(YI_IOS)
+#if defined(YI_IOS) || defined(YI_TVOS)
 #include "GeoLocationModule.h"
 
 #include <logging/YiLogger.h>
@@ -19,14 +19,6 @@ namespace {
         return [CLLocationManager locationServicesEnabled] &&
                [CLLocationManager authorizationStatus] != kCLAuthorizationStatusDenied &&
                [CLLocationManager authorizationStatus] != kCLAuthorizationStatusRestricted;
-    }
-}
-
-GeoLocationModule::GeoLocationModule()
-{
-    if (!LocationServicesEnabled())
-    {
-        YI_LOGD(LOG_TAG, "Location Services currently not enabled.");
     }
 }
 
@@ -60,5 +52,41 @@ YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Cal
 
         failedCallback({ ToDynamic(errorInfo) });
     }
+}
+
+void GeoLocationModule::StartObserving()
+{
+    UpdatedGPSCoordinates.Connect(*this, &GeoLocationModule::OnUpdatedGPSCoordinates);
+
+    if (LocationServicesEnabled())
+    {
+        AppDelegate *pApp = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+        CLLocationManager *pLocationManager = [pApp getLocationManager];
+
+        if ([CLLocationManager significantLocationChangeMonitoringAvailable])
+        {
+            [pLocationManager startMonitoringSignificantLocationChanges];
+
+            YI_LOGD(LOG_TAG, "StartObserving");
+        }
+    }
+}
+
+void GeoLocationModule::StopObserving()
+{
+    if (LocationServicesEnabled())
+    {
+        AppDelegate *pApp = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+        CLLocationManager *pLocationManager = [pApp getLocationManager];
+
+        if ([CLLocationManager significantLocationChangeMonitoringAvailable])
+        {
+            [pLocationManager stopMonitoringSignificantLocationChanges];
+
+            YI_LOGD(LOG_TAG, "StopObserving");
+        }
+    }
+
+    UpdatedGPSCoordinates.DisconnectFromAllSignals();
 }
 #endif

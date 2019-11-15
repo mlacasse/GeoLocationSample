@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { View, Text, AppState, NativeModules } from 'react-native';
+import { View, Text, AppState, NativeModules, NativeEventEmitter } from 'react-native';
 
 const { GeoLocation } = NativeModules;
 
@@ -19,6 +19,8 @@ class AppComponent extends PureComponent {
     // 5 = PortraitUpright
     // 6 = AutoUpright
 
+    this.locationChangeEvent = new NativeEventEmitter(GeoLocation);
+
     NativeModules.OrientationLock.setRotationMode(6);
   }
 
@@ -27,20 +29,38 @@ class AppComponent extends PureComponent {
       .then(location => this.setState({ location }))
       .catch(() => this.setState({ location: null }));
 
+    this.locationChangeEvent.addListener('change', this.handleLocationChange);
+
     AppState.addEventListener('change', this.handleAppStateChange);
-  }
+  };
 
   componentWillUnmount = () => {
-    AppState.removeEventListener('change', this.handleAppStateChange);
-  }
+    this.locationChangeEvent.removeListener('change', this.handleLocationChange);
 
-  handleAppStateChange = newAppState => {
-    if (newAppState === 'active') {
-      GeoLocation.get()
-        .then(location => this.setState({ location }))
-        .catch(() => this.setState({ location: null }));
+    AppState.removeEventListener('change', this.handleAppStateChange);
+  };
+
+  handleLocationChange = event => {
+    const { location } = event;
+
+    if (location) {
+      this.setState({ location });
     }
-  }
+  };
+
+  handleAppStateChange = async newAppState => {
+    if (newAppState === 'active') {
+      let location = null;
+
+      try {
+        location = await GeoLocation.get();
+      } catch(error) {
+        console.log('GeoLocation', error);
+      }
+
+      this.setState({ location });
+    }
+  };
 
   render = () => {
     const { location } = this.state;
@@ -70,7 +90,7 @@ class AppComponent extends PureComponent {
         <Text style={{ fontSize: 72, color: 'white', }}>Nope.</Text>
       </View>
     );
-  }
+  };
 };
 
 export default AppComponent;

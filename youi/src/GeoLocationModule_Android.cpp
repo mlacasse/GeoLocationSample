@@ -13,7 +13,19 @@ using namespace yi::react;
 extern JavaVM *cachedJVM;
 extern jobject cachedActivity;
 
-GeoLocationModule::GeoLocationModule() {
+extern "C"
+{
+  JNIEXPORT void JNICALL Java_tv_youi_app_AppActivity_nativeUpdatedGPSCoordinates(JNIEnv *env, jobject thiz, jdouble latitude, jdouble longitude, jdouble altitude);
+}
+
+void GeoLocationModule::StartObserving()
+{
+    UpdatedGPSCoordinates.Connect(*this, &GeoLocationModule::OnUpdatedGPSCoordinates);
+}
+
+void GeoLocationModule::StopObserving()
+{
+    UpdatedGPSCoordinates.DisconnectFromAllSignals();
 }
 
 YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Callback failedCallback)
@@ -73,5 +85,12 @@ YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Cal
              }
          }
      }
+}
+
+JNIEXPORT void JNICALL Java_tv_youi_app_AppActivity_nativeUpdatedGPSCoordinates(JNIEnv *env, jobject, jdouble latitude, jdouble longitude, jdouble altitude)
+{
+    YI_UNUSED(env);
+
+    GeoLocationModule::UpdatedGPSCoordinates.Emit(latitude, longitude, altitude);
 }
 #endif

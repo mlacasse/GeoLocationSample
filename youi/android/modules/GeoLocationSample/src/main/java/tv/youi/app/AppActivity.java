@@ -74,7 +74,11 @@ public class AppActivity extends CYIActivity {
             if (mLocationListener == null) {
                 mLocationListener = new LocationListener() {
                     @Override
-                    public void onLocationChanged(android.location.Location location) {}
+                    public void onLocationChanged(android.location.Location location) {
+                      nativeUpdatedGPSCoordinates(location.getLatitude(),
+                                                  location.getLongitude(),
+                                                  location.getAltitude());
+                    }
 
                     @Override
                     public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -135,4 +139,7 @@ public class AppActivity extends CYIActivity {
 
         return target;
     }
+
+  // Location update function used to emit an event with new location data to GeoLocationModule
+  protected native void nativeUpdatedGPSCoordinates(double latitude, double longitude, double altitude);
 }

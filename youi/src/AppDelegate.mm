@@ -1,8 +1,12 @@
 #if defined(YI_IOS) || defined(YI_TVOS)
 
+#include "GeoLocationModule.h"
+
 #import "AppDelegate.h"
 
 #include <logging/YiLoggerHelper.h>
+
+using namespace yi::react;
 
 @interface AppDelegate () <CLLocationManagerDelegate>
 @end
@@ -14,7 +18,12 @@ CLLocationManager *m_pLocationManager;
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(nonnull NSArray<CLLocation *> *)locations
 {
     YI_UNUSED(manager);
-    YI_UNUSED(locations);
+
+    CLLocation* location = [locations lastObject];
+
+    GeoLocationModule::UpdatedGPSCoordinates.Emit(location.coordinate.latitude,
+                                                  location.coordinate.longitude,
+                                                  location.altitude);
 }
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(nonnull NSError *)error
