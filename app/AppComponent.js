@@ -29,13 +29,13 @@ class AppComponent extends PureComponent {
       .then(location => this.setState({ location }))
       .catch(() => this.setState({ location: null }));
 
-    this.locationChangeEvent.addListener('change', this.handleLocationChange);
+    this.locationChangeEvent.addListener('locationDidChange', this.handleLocationChange);
 
     AppState.addEventListener('change', this.handleAppStateChange);
   };
 
   componentWillUnmount = () => {
-    this.locationChangeEvent.removeListener('change', this.handleLocationChange);
+    this.locationChangeEvent.removeListener('locationDidChange', this.handleLocationChange);
 
     AppState.removeEventListener('change', this.handleAppStateChange);
   };
@@ -49,15 +49,9 @@ class AppComponent extends PureComponent {
   };
 
   handleAppStateChange = async newAppState => {
+    console.log('handleAppStateChange', newAppState);
+
     if (newAppState === 'active') {
-      let location = null;
-
-      try {
-        location = await GeoLocation.get();
-      } catch(error) {
-        console.log('GeoLocation', error);
-      }
-
       this.setState({ location });
     }
   };
@@ -74,13 +68,14 @@ class AppComponent extends PureComponent {
     };
 
     if (location) {
-      const { lat, long } = location;
+      const { lat, long, alt } = location;
 
       return (
         <View style={style}>
           <Text style={{ fontSize: 36, color: 'white', }}>Location Services: {location ? 'ON' : 'OFF'}</Text>
-          <Text style={{ fontSize: 28, color: 'white', }}>Lat: {lat}</Text>
-          <Text style={{ fontSize: 28, color: 'white', }}>Long: {long}</Text>
+          <Text style={{ fontSize: 28, color: 'white', }}>Latitude: {lat.toFixed(3)}</Text>
+          <Text style={{ fontSize: 28, color: 'white', }}>Longitude: {long.toFixed(3)}</Text>
+          <Text style={{ fontSize: 28, color: 'white', }}>Altitude: {alt}</Text>
         </View>
       );
     }

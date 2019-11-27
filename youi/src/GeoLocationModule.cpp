@@ -34,7 +34,7 @@ void GeoLocationModule::StopObserving()
 
 GeoLocationModule::GeoLocationModule()
 {
-    SetSupportedEvents({"change"});
+    SetSupportedEvents({"locationDidChange"});
 }
 
 GeoLocationModule::~GeoLocationModule()
@@ -50,7 +50,7 @@ void GeoLocationModule::OnUpdatedGPSCoordinates(double latitude, double longitud
     location["long"] = ToDynamic(longitude);
     location["alt"] = ToDynamic(altitude);
 
-    EmitEvent("change", folly::dynamic::object("location", location));
+    EmitEvent("locationDidChange", folly::dynamic::object("location", location));
 
     YI_LOGD(LOG_TAG, "OnUpdatedGPSCoordinates");
 }

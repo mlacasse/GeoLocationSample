@@ -7,6 +7,7 @@ import android.annotation.SuppressLint;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
 
+import android.location.Criteria;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v4.content.ContextCompat;
@@ -28,12 +29,125 @@ import tv.youi.youiengine.CYIActivity;
 public class AppActivity extends CYIActivity {
     private static String LOG_TAG = "AppActivity";
 
-    private LocationListener mLocationListener = null;
+    private static long MIN_INTERVAL_BETWEEN_UPDATES = 300000;   // milliseconds
+    private static float MIN_DISTANCE_BETWEEN_UPDATES = 5;      // meters
 
-    public boolean isLocationAvailable() {
-        LocationManager locationManager = (LocationManager) getApplicationContext()
-          .getSystemService(Context.LOCATION_SERVICE);
+    private LocationListener locationListener = null;
+    private LocationManager locationManager = null;
 
+    private Criteria criteria = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        criteria = new Criteria();
+
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setPowerRequirement(Criteria.POWER_LOW);
+        criteria.setSpeedRequired(true);
+
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.d(LOG_TAG, "Location changed\n\tLatitude: " +
+                        location.getLatitude() + "\n\tLongitude: " +
+                        location.getLongitude() + "\n\tAltitude: " +
+                        location.getAltitude());
+
+                nativeUpdatedGPSCoordinates(location.getLatitude(),
+                        location.getLongitude(),
+                        location.getAltitude());
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            @Override
+            public void onProviderEnabled(String provider) {}
+
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
+
+        locationManager = (LocationManager) getApplicationContext()
+                .getSystemService(Context.LOCATION_SERVICE);
+
+        if (!isLocationAvailable()) {
+            ActivityCompat.requestPermissions(AppActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    protected void onResume() {
+        Log.d(LOG_TAG, "onResume()");
+
+        super.onResume();
+
+        try {
+            if (!isLocationAvailable()) {
+                ActivityCompat.requestPermissions(AppActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            } else {
+                locationManager.requestLocationUpdates(
+                        locationManager.getBestProvider(criteria, true),
+                        MIN_INTERVAL_BETWEEN_UPDATES,
+                        MIN_DISTANCE_BETWEEN_UPDATES,
+                        locationListener);
+            }
+        }
+        catch(SecurityException sec) {
+            Log.e(LOG_TAG, "[1] Location Services currently not available.\n\n\t" + sec.getMessage());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(LOG_TAG, "onPause()");
+
+        super.onPause();
+
+        if (locationManager != null) {
+            locationManager.removeUpdates(locationListener);
+        }
+    }
+
+    public double[] _get()
+    {
+        Location location = null;
+
+        try {
+            if (!isLocationAvailable()) {
+                ActivityCompat.requestPermissions(AppActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+
+                if (!isLocationAvailable()) {
+                    return new double[0];
+                }
+            }
+
+            if (locationManager != null) {
+                location = locationManager.getLastKnownLocation(locationManager
+                        .getBestProvider(criteria, true));
+            }
+        }
+        catch(SecurityException sec) {
+            Log.e(LOG_TAG, "[2] Location Services currently not available.\n\n\t" + sec.getMessage());
+        }
+
+        if (location != null) {
+            return new double [] {location.getLatitude(), location.getLongitude(), location.getAltitude()};
+        }
+
+        return new double[0];
+    }
+
+    private boolean isLocationAvailable() {
         if (locationManager == null) {
             return false;
         }
@@ -42,7 +156,6 @@ public class AppActivity extends CYIActivity {
                 .isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isNetworkProviderEnabled = locationManager
                 .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
 
         if(!isGPSProviderEnabled || !isNetworkProviderEnabled) {
             return false;
@@ -57,89 +170,6 @@ public class AppActivity extends CYIActivity {
                hasAccessCoarseLocation == PermissionChecker.PERMISSION_GRANTED;
     }
 
-    public double[] _get()
-    {
-        List<Double> list = new ArrayList<>();
-
-        try {
-            if (!isLocationAvailable()) {
-                ActivityCompat.requestPermissions(AppActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                ActivityCompat.requestPermissions(AppActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-
-                if (!isLocationAvailable()) {
-                    return new double[0];
-                }
-            }
-
-            if (mLocationListener == null) {
-                mLocationListener = new LocationListener() {
-                    @Override
-                    public void onLocationChanged(android.location.Location location) {
-                      nativeUpdatedGPSCoordinates(location.getLatitude(),
-                                                  location.getLongitude(),
-                                                  location.getAltitude());
-                    }
-
-                    @Override
-                    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-                    @Override
-                    public void onProviderEnabled(String provider) {}
-
-                    @Override
-                    public void onProviderDisabled(String provider) {}
-                };
-            }
-
-            LocationManager locationManager = (LocationManager) getApplicationContext()
-                    .getSystemService(Context.LOCATION_SERVICE);
-
-            if (locationManager != null) {
-                List<String> providers = locationManager.getProviders(true);
-
-                Location bestLocation = null;
-
-                for (String provider : providers) {
-                    Location location = locationManager.getLastKnownLocation(provider);
-
-                    if (location == null) {
-                        //This is needed to prime for location updates in the event that a location was never synced (like on a fresh device with no SIM or GPS available).
-                        HandlerThread mLocationLooper = new HandlerThread("LocationHandlerThread");
-                        mLocationLooper.start();
-                        locationManager.requestSingleUpdate(provider, mLocationListener, mLocationLooper.getLooper());
-
-                        mLocationLooper.join(750);
-
-                        location = locationManager.getLastKnownLocation(provider);
-                    }
-
-                    if (location != null && (bestLocation == null || location.getAccuracy() < bestLocation.getAccuracy())) {
-                        bestLocation = location;
-                    }
-                }
-
-                if (bestLocation != null) {
-                    list.add(bestLocation.getLatitude());
-                    list.add(bestLocation.getLongitude());
-                    list.add(bestLocation.getAltitude());
-                }
-            }
-        }
-        catch(InterruptedException inte) {
-            Log.e(LOG_TAG, "Location Services currently not available.\n\n\t" + inte.getMessage());
-        }
-        catch(SecurityException sec) {
-            Log.e(LOG_TAG, "Location Services currently not available.\n\n\t" + sec.getMessage());
-        }
-
-        double[] target = new double[list.size()];
-        for(int i = target.length; --i >= 0;) {
-            target[i] = list.get(i);
-        }
-
-        return target;
-    }
-
-  // Location update function used to emit an event with new location data to GeoLocationModule
-  protected native void nativeUpdatedGPSCoordinates(double latitude, double longitude, double altitude);
+    // Location update function used to emit an event with new location data to GeoLocationModule
+    protected native void nativeUpdatedGPSCoordinates(double latitude, double longitude, double altitude);
 }
