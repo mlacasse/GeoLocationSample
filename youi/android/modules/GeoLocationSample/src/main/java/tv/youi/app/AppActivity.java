@@ -30,7 +30,7 @@ public class AppActivity extends CYIActivity {
     private static String LOG_TAG = "AppActivity";
 
     private static long MIN_INTERVAL_BETWEEN_UPDATES = 300000;   // milliseconds
-    private static float MIN_DISTANCE_BETWEEN_UPDATES = 5;      // meters
+    private static float MIN_DISTANCE_BETWEEN_UPDATES = 3000;    // meters
 
     private LocationListener locationListener = null;
     private LocationManager locationManager = null;

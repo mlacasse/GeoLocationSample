@@ -7,32 +7,49 @@
 #import <CoreLocation/CoreLocation.h>
 #import <UIKit/UIKit.h>
 
-#import "AppDelegate.h"
+#import "LocationManagerDelegate.h"
 
 #define LOG_TAG "GeoLocationModule"
 
 using namespace yi::react;
 
 namespace {
-    bool LocationServicesEnabled()
+    CLLocationManager *locationManager;
+    id locationManagerDelegate;
+}
+
+bool locationServicesEnabled()
+{
+    return [CLLocationManager locationServicesEnabled] &&
+    [CLLocationManager authorizationStatus] != kCLAuthorizationStatusDenied &&
+    [CLLocationManager authorizationStatus] != kCLAuthorizationStatusRestricted;
+}
+
+CLLocationManager* getLocationManager()
+{
+    if(!locationManager)
     {
-        return [CLLocationManager locationServicesEnabled] &&
-               [CLLocationManager authorizationStatus] != kCLAuthorizationStatusDenied &&
-               [CLLocationManager authorizationStatus] != kCLAuthorizationStatusRestricted;
+        locationManager = [[CLLocationManager alloc] init];
+        
+        locationManagerDelegate = [[LocationManagerDelegate alloc] init];
+        [locationManager setDelegate:locationManagerDelegate];
+        
+        [locationManager setDesiredAccuracy:kCLLocationAccuracyThreeKilometers];
     }
+    
+    return locationManager;
 }
 
 YI_RN_DEFINE_EXPORT_METHOD(GeoLocationModule, get)(Callback successCallback, Callback failedCallback)
 {
-    AppDelegate *pApp = (AppDelegate*)[[UIApplication sharedApplication] delegate];
-    CLLocationManager *pLocationManager = [pApp getLocationManager];
+    CLLocationManager *pLocationManager = getLocationManager();
 
     if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined)
     {
         [pLocationManager requestWhenInUseAuthorization];
     }
 
-    if (LocationServicesEnabled())
+    if (locationServicesEnabled())
     {
         [pLocationManager requestLocation];
 
@@ -58,10 +75,9 @@ void GeoLocationModule::StartObserving()
 {
     UpdatedGPSCoordinates.Connect(*this, &GeoLocationModule::OnUpdatedGPSCoordinates);
 
-    if (LocationServicesEnabled())
+    if (locationServicesEnabled())
     {
-        AppDelegate *pApp = (AppDelegate*)[[UIApplication sharedApplication] delegate];
-        CLLocationManager *pLocationManager = [pApp getLocationManager];
+        CLLocationManager *pLocationManager = getLocationManager();
 
         if ([CLLocationManager significantLocationChangeMonitoringAvailable])
         {
@@ -74,10 +90,9 @@ void GeoLocationModule::StartObserving()
 
 void GeoLocationModule::StopObserving()
 {
-    if (LocationServicesEnabled())
+    if (locationServicesEnabled())
     {
-        AppDelegate *pApp = (AppDelegate*)[[UIApplication sharedApplication] delegate];
-        CLLocationManager *pLocationManager = [pApp getLocationManager];
+        CLLocationManager *pLocationManager = getLocationManager();
 
         if ([CLLocationManager significantLocationChangeMonitoringAvailable])
         {
